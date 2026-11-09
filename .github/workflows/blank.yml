@@ -1,0 +1,38 @@
+
+name: BOOKETIK R3-B8-O2 Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Extract build kit
+        run: |
+          unzip -q BOOKETIK_R3B8O2_OFFHOST_BUILD_DEPLOY_KIT_20261109.zip
+
+      - name: Compile BOOKETIK
+        run: |
+          bash kit/build.sh \
+            "$GITHUB_WORKSPACE/BOOKETIK_R3B8O2_FRONTEND_BUILD_SOURCE_20261109T133219Z.tar.gz" \
+            "$GITHUB_WORKSPACE"
+
+      - name: Upload compiled assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: booketik-r3b8o2-compiled
+          path: |
+            BOOKETIK_R3B8O2_COMPILED_FOR_HOSTINGER_20261109.tar.gz
+            BOOKETIK_R3B8O2_COMPILED_FOR_HOSTINGER_20261109.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 7
