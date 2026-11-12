@@ -1,0 +1,54 @@
+
+name: BOOKETIK M0-C6 V3 Merge Studio & External Prices
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  merge-and-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout private build repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Python on GitHub runner
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify and extract M0-C6 V3 kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '328ec2d63c0074289aee28ecdf50cbbef558602e330a9211712ae643ae948f8b  BOOKETIK_M0_C6_V3_REBASE_BUILD_KIT_20261112.zip' | sha256sum -c -
+          unzip -q -o BOOKETIK_M0_C6_V3_REBASE_BUILD_KIT_20261112.zip
+
+      - name: Guarded merge and 38 UI assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash m0c6v3/scripts/build.sh "$GITHUB_WORKSPACE" preflight
+
+      - name: Build client and SSR
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash m0c6v3/scripts/build.sh "$GITHUB_WORKSPACE" build
+
+      - name: Upload verified merged release
+        uses: actions/upload-artifact@v4
+        with:
+          name: booketik-m0c6-v3-merged-compiled
+          path: |
+            BOOKETIK_M0_C6_V3_MERGED_COMPILED_20261112.tar.gz
+            BOOKETIK_M0_C6_V3_MERGED_COMPILED_20261112.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 7
